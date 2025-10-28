@@ -1,59 +1,31 @@
-// netlify/functions/generate-image.js
+const fetch = require('node-fetch');
 
-exports.handler = async (event, context) => {
+exports.handler = async (event) => {
   try {
-    if (event.httpMethod !== 'POST') {
-      return {
-        statusCode: 405,
-        body: JSON.stringify({ error: 'Método não permitido, use POST' }),
-      };
-    }
+    const { prompt } = JSON.parse(event.body);
 
-    const { prompt } = JSON.parse(event.body || '{}');
-    if (!prompt) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'Prompt é obrigatório' }),
-      };
-    }
+    const SPACE_API = 'https://hf.space/embed/Miragic-AI/Miragic-AI-Image-Generator/api/predict/';
 
-    const hfToken = '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'; // seu token Hugging Face
-    const modelUrl = 'https://api-inference.huggingface.co/models/CompVis/stable-diffusion-v1-4-original';
-
-    // Faz a requisição à API Hugging Face
-    const response = await fetch(modelUrl, {
+    const response = await fetch(SPACE_API, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${hfToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ inputs: prompt }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data: [prompt] }),
     });
 
-    const data = await response.json();
-
-    // Se houver erro do modelo
-    if (data.error) {
+    if (!response.ok) {
+      const text = await response.text();
       return {
-        statusCode: 500,
-        body: JSON.stringify({ error: 'Erro do modelo Hugging Face', details: data.error }),
+        statusCode: response.status,
+        body: JSON.stringify({ error: 'Erro do Space', details: text }),
       };
     }
 
-    // Pegando a imagem em base64
-    const base64Image = data[0]?.image || null;
-    if (!base64Image) {
-      return {
-        statusCode: 500,
-        body: JSON.stringify({ error: 'Não foi possível gerar a imagem' }),
-      };
-    }
+    const result = await response.json();
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ image: `data:image/png;base64,${base64Image}` }),
+      body: JSON.stringify({ image: result.data[0] }),
     };
-
   } catch (err) {
     return {
       statusCode: 500,
