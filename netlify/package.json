@@ -1,0 +1,12 @@
+{
+  "name": "fei-penta-web",
+  "version": "1.0.0",
+  "description": "Projeto de geração de imagens com Hugging Face",
+  "main": "index.js",
+  "scripts": {
+    "start": "netlify dev"
+  },
+  "dependencies": {
+    "axios": "^0.27.2"
+  }
+}

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gerador de Imagens IA</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 2rem; }
+    input, button { padding: 0.5rem; margin: 0.5rem 0; width: 100%; max-width: 400px; }
+    #result { margin-top: 1rem; }
+  </style>
+</head>
+<body>
+  <h1>Gerador de Imagens IA</h1>
+
+  <div>
+  <input type="text" id="prompt" placeholder="Digite seu prompt" style="width: 80%;">
+  <button id="generateBtn">Gerar Imagem</button>
+</div>
+
+<div id="status" style="margin-top:10px;">Status: aguardando...</div>
+<div id="result" style="margin-top:10px;"></div>
+
+<script>
+const generateBtn = document.getElementById('generateBtn');
+const statusDiv = document.getElementById('status');
+const resultDiv = document.getElementById('result');
+
+generateBtn.addEventListener('click', async () => {
+  const prompt = document.getElementById('prompt').value.trim();
+  if (!prompt) return alert('Por favor, digite um prompt!');
+
+  // Limpa resultados anteriores
+  statusDiv.textContent = 'Status: iniciando...';
+  resultDiv.innerHTML = '';
+
+  try {
+    // Chama a função start-generate
+    const startResp = await fetch('/.netlify/functions/start-generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt })
+    });
+
+    const startData = await startResp.json();
+    const generationId = startData.generationId;
+    if (!generationId) throw new Error('Não foi possível iniciar a geração.');
+
+    // Intervalo para checar status da geração
+    const interval = setInterval(async () => {
+      const statusResp = await fetch(`/.netlify/functions/status?generationId=${generationId}`);
+      const statusData = await statusResp.json();
+
+      statusDiv.textContent = `Status: ${statusData.status || 'desconhecido'}`;
+
+      if (statusData.status === 'concluída') {
+        clearInterval(interval);
+        resultDiv.innerHTML = `<img src="${statusData.imageUrl}" alt="Imagem gerada" style="max-width:100%; border:1px solid #ccc;">`;
+      }
+
+      if (statusData.status === 'erro') {
+        clearInterval(interval);
+        statusDiv.textContent = 'Status: erro ao gerar a imagem';
+      }
+    }, 2000);
+
+  } catch (err) {
+    statusDiv.textContent = 'Status: erro ao iniciar';
+    console.error(err);
+  }
+});
+</script>

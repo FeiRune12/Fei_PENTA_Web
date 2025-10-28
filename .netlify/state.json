@@ -1,0 +1,20 @@
+{
+	"geolocation": {
+		"data": {
+			"city": "Suzano",
+			"country": {
+				"code": "BR",
+				"name": "Brazil"
+			},
+			"subdivision": {
+				"code": "SP",
+				"name": "São Paulo"
+			},
+			"timezone": "America/Sao_Paulo",
+			"latitude": -23.6069,
+			"longitude": -46.3056,
+			"postalCode": "08600"
+		},
+		"timestamp": 1761613700766
+	}
+}

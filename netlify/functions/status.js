@@ -1,6 +1,4 @@
 // netlify/functions/status.js
-import fetch from 'node-fetch';
-
 export async function handler(event, context) {
   try {
     const { generationId } = event.queryStringParameters || {};
@@ -12,21 +10,22 @@ export async function handler(event, context) {
       };
     }
 
-    // Chamada à sua API para verificar status da geração
-    const response = await fetch(`https://fei-penta-web.netlify.app/status/${generationId}`);
+    const generations = globalThis._generations || {};
+    const gen = generations[generationId];
 
-    if (!response.ok) {
-      throw new Error(`Erro ao consultar status: ${response.statusText}`);
+    if (!gen) {
+      return {
+        statusCode: 404,
+        body: JSON.stringify({ error: 'Geração não encontrada' }),
+      };
     }
-
-    const data = await response.json();
 
     return {
       statusCode: 200,
       body: JSON.stringify({
         generationId,
-        status: data.status || 'desconhecido',
-        result: data.result || null, // caso a API retorne a imagem ou link
+        status: gen.status,
+        imageUrl: gen.status === 'concluída' ? gen.imageUrl : null,
       }),
     };
   } catch (error) {
